@@ -63,7 +63,7 @@ public:
 
         std::vector<Entity> entities(MAX_OBJECT - 1);
 
-        for (auto &entity: entities) {
+        for (auto &_entity: entities) {
             auto entity = gCoordinator.CreateEntity();
 
             gCoordinator.AddComponent<Gravity>(entity, {
@@ -191,7 +191,6 @@ public:
     std::shared_ptr<RenderableSystem> renderableSystem;
     Scene scene;
     Camera camera;
-    Entity _entity;
 };
 
 int main()
