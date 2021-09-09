@@ -164,26 +164,25 @@ public:
 
             window.pollEvent();
             if (!bInteractWithUi) {
-                #define SEND_KEY_EVENT(key)\
-                    if (window.isKeyPressed(GLFW_KEY_##key)  && !button.test(InputButtons::##key)) {\
-                        button.set(InputButtons::##key);\
-                        Event event(Events::Window::INPUT);\
-                        event.SetParam(Events::Window::Input::INPUT, button);\
-                        gCoordinator.SendEvent(event);\
-                    }\
-                    else if (window.isKeyReleased(GLFW_KEY_##key) && button.test(InputButtons::##key)) {\
-                        button.reset(InputButtons::##key);\
-                        Event event(Events::Window::INPUT);\
-                        event.SetParam(Events::Window::Input::INPUT, button);\
-                        gCoordinator.SendEvent(event);\
-                    }
+#define SEND_KEY_EVENT(key)                                                              \
+    if (window.isKeyPressed(GLFW_KEY_##key) && !button.test(InputButtons::key)) {        \
+        button.set(InputButtons::key);                                                   \
+        Event event(Events::Window::INPUT);                                              \
+        event.SetParam(Events::Window::Input::INPUT, button);                            \
+        gCoordinator.SendEvent(event);                                                   \
+    } else if (window.isKeyReleased(GLFW_KEY_##key) && button.test(InputButtons::key)) { \
+        button.reset(InputButtons::key);                                                 \
+        Event event(Events::Window::INPUT);                                              \
+        event.SetParam(Events::Window::Input::INPUT, button);                            \
+        gCoordinator.SendEvent(event);                                                   \
+    }
                 SEND_KEY_EVENT(W);
                 SEND_KEY_EVENT(S);
                 SEND_KEY_EVENT(D);
                 SEND_KEY_EVENT(A);
                 SEND_KEY_EVENT(SPACE);
                 SEND_KEY_EVENT(LEFT_SHIFT);
-                #undef SEND_KEY_EVENT
+#undef SEND_KEY_EVENT
             }
 
             physicsSystem->Update(dt);
