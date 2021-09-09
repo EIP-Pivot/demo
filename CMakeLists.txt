@@ -20,14 +20,14 @@ endif()
 FetchContent_Declare(
     pivot
     GIT_REPOSITORY https://github.com/EIP-Pivot/pivot.git
-    GIT_TAG dc7eb95f5ad2df01f9f1ad349e8a5ed05bf95e91
+    GIT_TAG 39f2432fd699a6b5a096327e8b7f97d6c11277f2
 )
 if (NOT pivot_POPULATED)
     message(STATUS "Populating pivot")
     FetchContent_Populate(pivot)
     add_subdirectory(${pivot_SOURCE_DIR} ${pivot_BINARY_DIR})
     target_compile_definitions(pivot-graphics PUBLIC
-        MAX_PROJECTION_LIMIT=1000.0f
+        MAX_PROJECTION_LIMIT=100000.0f
     )
 endif()
 
@@ -35,4 +35,4 @@ add_executable(${PROJECT_NAME} source/main.cxx source/Systems/RenderableSystem.c
 
 target_include_directories(${PROJECT_NAME} PRIVATE include/)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE pivot-ecs pivot-graphics)
+target_link_libraries(${PROJECT_NAME} PRIVATE pivot-ecs)

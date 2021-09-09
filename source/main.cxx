@@ -12,6 +12,8 @@
 #include <pivot/ecs/Components/Transform.hxx>
 #include <pivot/ecs/Components/RigidBody.hxx>
 #include <pivot/ecs/Systems/PhysicsSystem.hxx>
+#include <pivot/ecs/Systems/ControlSystem.hxx>
+#include <pivot/ecs/Core/Event.hxx>
 
 #include <Logger.hpp>
 
@@ -24,7 +26,7 @@ Logger *logger = nullptr;
 class Application : public VulkanApplication
 {
 public:
-    Application(): VulkanApplication(), camera(glm::vec3(0, 200, 500)){};
+    Application(): VulkanApplication(){};
 
     void init()
     {
@@ -33,6 +35,7 @@ public:
         gCoordinator.RegisterComponent<RigidBody>();
         gCoordinator.RegisterComponent<Transform>();
         gCoordinator.RegisterComponent<Renderable>();
+        gCoordinator.RegisterComponent<Camera>();
 
         physicsSystem = gCoordinator.RegisterSystem<PhysicsSystem>();
         {
@@ -42,7 +45,7 @@ public:
             signature.set(gCoordinator.GetComponentType<Transform>());
             gCoordinator.SetSystemSignature<PhysicsSystem>(signature);
         }
-
+        
         renderableSystem = gCoordinator.RegisterSystem<RenderableSystem>();
         {
             Signature signature;
@@ -50,6 +53,15 @@ public:
             signature.set(gCoordinator.GetComponentType<Transform>());
             gCoordinator.SetSystemSignature<RenderableSystem>(signature);
         }
+
+        controlSystem = gCoordinator.RegisterSystem<ControlSystem>();
+        {
+            Signature signature;
+            signature.set(gCoordinator.GetComponentType<Camera>());
+            gCoordinator.SetSystemSignature<ControlSystem>(signature);
+        }
+
+        controlSystem->Init();
 
         std::default_random_engine generator;
         std::uniform_real_distribution<float> randPositionY(0.0f, 50.0f);
@@ -59,48 +71,78 @@ public:
         std::uniform_real_distribution<float> randGravity(-10.0f, -1.0f);
         std::uniform_real_distribution<float> randVelocityY(10.0f, 200.0f);
         std::uniform_real_distribution<float> randVelocityXZ(-200.0f, 200.0f);
+        std::uniform_real_distribution<float> randScale(0.5f, 1.0f);
         std::uniform_int_distribution<int> randTexture(0, 7);
 
-        std::vector<Entity> entities(MAX_OBJECT - 1);
+        std::vector<Entity> entities(MAX_OBJECT - 2);
 
         for (auto &_entity: entities) {
-            auto entity = gCoordinator.CreateEntity();
+            try
+            {
+                auto entity = gCoordinator.CreateEntity();
 
-            gCoordinator.AddComponent<Gravity>(entity, {
-                .force = glm::vec3(0.0f, randGravity(generator), 0.0f)
-            });
+                gCoordinator.AddComponent<Gravity>(entity, {
+                    .force = glm::vec3(0.0f, randGravity(generator), 0.0f)
+                });
 
-            gCoordinator.AddComponent<RigidBody>(entity, {
-                    .velocity = glm::vec3(randVelocityXZ(generator), randVelocityY(generator), randVelocityXZ(generator)), .acceleration = glm::vec3(0.0f, 0.0f, 0.0f)
-            });
+                gCoordinator.AddComponent<RigidBody>(entity, {
+                        .velocity = glm::vec3(randVelocityXZ(generator), randVelocityY(generator), randVelocityXZ(generator)), .acceleration = glm::vec3(0.0f, 0.0f, 0.0f)
+                });
 
-            gCoordinator.AddComponent<Transform>(
-                entity,
-                {.position = glm::vec3(randPositionXZ(generator), randPositionY(generator), randPositionXZ(generator)),
-                 .rotation = glm::vec3(randRotation(generator), randRotation(generator), randRotation(generator)),
-                 .scale = glm::vec3(0.5f)});
-            gCoordinator.AddComponent<Renderable>(entity, {.meshID = "cube", .textureIndex = 1});
+                gCoordinator.AddComponent<Transform>(
+                    entity,
+                    {.position = glm::vec3(randPositionXZ(generator), randPositionY(generator), randPositionXZ(generator)),
+                    .rotation = glm::vec3(randRotation(generator), randRotation(generator), randRotation(generator)),
+                    .scale = glm::vec3(randScale(generator))});
+                gCoordinator.AddComponent<Renderable>(entity, {.meshID = "cube", .textureIndex = 1});
 
-            scene.obj.push_back({
-                .meshID = "cube",
-                .objectInformation =
-                    {
-                        .transform =
-                            {
-                                .translation = gCoordinator.GetComponent<Transform>(entity).position,
-                                .rotation = gCoordinator.GetComponent<Transform>(entity).rotation,
-                                .scale = gCoordinator.GetComponent<Transform>(entity).scale,
-                            },
-                        .textureIndex = (uint32_t)randTexture(generator),
-                    },
-            });
+                scene.obj.push_back({
+                    .meshID = "cube",
+                    .objectInformation =
+                        {
+                            .transform =
+                                {
+                                    .translation = gCoordinator.GetComponent<Transform>(entity).position,
+                                    .rotation = gCoordinator.GetComponent<Transform>(entity).rotation,
+                                    .scale = gCoordinator.GetComponent<Transform>(entity).scale,
+                                },
+                            .textureIndex = (uint32_t)randTexture(generator),
+                        },
+                });
+            }
+            catch(const std::exception& e)
+            {
+                logger->err("ECS") << e.what();
+                LOGGER_ENDL;
+            }
         }
 
+        camera = gCoordinator.CreateEntity();
+        gCoordinator.AddComponent<Camera>(camera, Camera(glm::vec3(0, 200, 500)));
+        gCoordinator.AddComponent<Transform>(camera, {
+                    .position = glm::vec3(0.0f, 0.0f, 0.0f),
+                    .rotation = glm::vec3(0, 0, 0),
+                    .scale = glm::vec3(1.0f)
+        });
+
+         scene.obj.push_back({
+            .meshID = "plane",
+            .objectInformation =
+                {
+                    .transform =
+                        {
+                            .translation = glm::vec3(0.0f, 0.0f, 0.0f),
+                            .rotation = glm::vec3(0, 0, 0),
+                            .scale = glm::vec3(1.0f),
+                        },
+                    .textureIndex = 7,
+                },
+        });
         window.setUserPointer(this);
         window.captureCursor(true);
         window.setCursorPosCallback(Application::cursor_callback);
         window.setKeyCallback(Application::keyboard_callback);
-        load3DModels({"../assets/cube.obj"});
+        load3DModels({"../assets/plane.obj", "../assets/cube.obj"});
         loadTexturess({"../assets/rouge.png",
                        "../assets/vert.png",
                        "../assets/bleu.png",
@@ -116,22 +158,38 @@ public:
     {
         float dt = 0.0f;
         this->VulkanApplication::init();
+        std::bitset<8> button;
         while (!window.shouldClose()) {
             auto startTime = std::chrono::high_resolution_clock::now();
 
             window.pollEvent();
             if (!bInteractWithUi) {
-                if (window.isKeyPressed(GLFW_KEY_W)) camera.processKeyboard(Camera::FORWARD);
-                if (window.isKeyPressed(GLFW_KEY_S)) camera.processKeyboard(Camera::BACKWARD);
-                if (window.isKeyPressed(GLFW_KEY_D)) camera.processKeyboard(Camera::RIGHT);
-                if (window.isKeyPressed(GLFW_KEY_A)) camera.processKeyboard(Camera::LEFT);
-                if (window.isKeyPressed(GLFW_KEY_SPACE)) camera.processKeyboard(Camera::UP);
-                if (window.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) camera.processKeyboard(Camera::DOWN);
+                #define SEND_KEY_EVENT(key)\
+                    if (window.isKeyPressed(GLFW_KEY_##key)  && !button.test(InputButtons::##key)) {\
+                        button.set(InputButtons::##key);\
+                        Event event(Events::Window::INPUT);\
+                        event.SetParam(Events::Window::Input::INPUT, button);\
+                        gCoordinator.SendEvent(event);\
+                    }\
+                    else if (window.isKeyReleased(GLFW_KEY_##key) && button.test(InputButtons::##key)) {\
+                        button.reset(InputButtons::##key);\
+                        Event event(Events::Window::INPUT);\
+                        event.SetParam(Events::Window::Input::INPUT, button);\
+                        gCoordinator.SendEvent(event);\
+                    }
+                SEND_KEY_EVENT(W);
+                SEND_KEY_EVENT(S);
+                SEND_KEY_EVENT(D);
+                SEND_KEY_EVENT(A);
+                SEND_KEY_EVENT(SPACE);
+                SEND_KEY_EVENT(LEFT_SHIFT);
+                #undef SEND_KEY_EVENT
             }
 
             physicsSystem->Update(dt);
+            controlSystem->Update(dt);
             renderableSystem->Update(scene.obj);
-            draw(scene, camera, 0);
+            draw(scene, gCoordinator.GetComponent<Camera>(camera), 0);
 
             auto stopTime = std::chrono::high_resolution_clock::now();
             dt = std::chrono::duration<float>(stopTime - startTime).count();
@@ -178,7 +236,7 @@ public:
 
         eng->lastX = xpos;
         eng->lastY = ypos;
-        eng->camera.processMouseMovement(xoffset, yoffset);
+        gCoordinator.GetComponent<Camera>(eng->camera).processMouseMovement(xoffset, yoffset);
     }
 
 public:
@@ -189,8 +247,9 @@ public:
     bool bFirstMouse = true;
     std::shared_ptr<PhysicsSystem> physicsSystem;
     std::shared_ptr<RenderableSystem> renderableSystem;
+    std::shared_ptr<ControlSystem> controlSystem;
     Scene scene;
-    Camera camera;
+    Entity camera;
 };
 
 int main()
