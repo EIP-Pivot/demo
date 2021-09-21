@@ -63,6 +63,7 @@ public:
 
         controlSystem->Init();
 
+        std::array<std::string, 8> textures = {"rouge", "vert", "bleu", "cyan", "orange", "jaune", "blanc", "violet"};
         std::default_random_engine generator;
         std::uniform_real_distribution<float> randPositionY(0.0f, 50.0f);
         std::uniform_real_distribution<float> randPositionXZ(-50.0f, 50.0f);
@@ -72,15 +73,11 @@ public:
         std::uniform_real_distribution<float> randVelocityY(10.0f, 200.0f);
         std::uniform_real_distribution<float> randVelocityXZ(-200.0f, 200.0f);
         std::uniform_real_distribution<float> randScale(0.5f, 1.0f);
-        std::uniform_int_distribution<int> randTexture(0, 7);
+        std::uniform_int_distribution<int> randTexture(0, textures.size() - 1);
 
         std::vector<Entity> entities(MAX_OBJECT - 2);
 
-        const char *texture[] = {"rouge", "vert",   "bleu",
-                                 "cyan",  "orange", "jaune",
-                                 "blanc", "violet"};
-        for (auto &_entity: entities)
-        {
+        for (auto &_entity: entities) {
             auto entity = gCoordinator.CreateEntity();
 
             gCoordinator.AddComponent<Gravity>(entity, {.force = glm::vec3(0.0f, randGravity(generator), 0.0f)});
@@ -108,7 +105,7 @@ public:
                                 .rotation = gCoordinator.GetComponent<Transform>(entity).rotation,
                                 .scale = gCoordinator.GetComponent<Transform>(entity).scale,
                             },
-                        .textureIndex = texture[randTexture(generator)],
+                        .textureIndex = textures[randTexture(generator)],
                         .materialIndex = "white",
                     },
             });
@@ -140,21 +137,23 @@ public:
                                        if (action == Window::KeyAction::Release) {
                                            window.captureCursor(!window.captureCursor());
                                            bFirstMouse = window.captureCursor();
-                                        }
-                                    });
+                                       }
+                                   });
         auto key_lambda = [&](Window &window, const Window::Key key, const Window::KeyAction action) {
             switch (action) {
                 case Window::KeyAction::Pressed: {
                     button.set(static_cast<std::size_t>(key));
                     Event event(Events::Window::INPUT);
                     event.SetParam(Events::Window::Input::INPUT, button);
-                    gCoordinator.SendEvent(event); } break;
+                    gCoordinator.SendEvent(event);
+                } break;
                 case Window::KeyAction::Release: {
                     button.reset(static_cast<std::size_t>(key));
                     Event event(Events::Window::INPUT);
                     event.SetParam(Events::Window::Input::INPUT, button);
-                    gCoordinator.SendEvent(event); } break;
-                 default: break;
+                    gCoordinator.SendEvent(event);
+                } break;
+                default: break;
             }
         };
         window.setKeyEventCallback(Window::Key::W, key_lambda);
@@ -178,7 +177,7 @@ public:
         });
         load3DModels({"../assets/plane.obj", "../assets/cube.obj"});
         loadTextures({"../assets/rouge.png", "../assets/vert.png", "../assets/bleu.png", "../assets/cyan.png",
-                       "../assets/orange.png", "../assets/jaune.png", "../assets/blanc.png", "../assets/violet.png"});
+                      "../assets/orange.png", "../assets/jaune.png", "../assets/blanc.png", "../assets/violet.png"});
     }
 
     void run()
