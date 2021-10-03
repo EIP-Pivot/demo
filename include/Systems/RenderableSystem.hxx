@@ -9,5 +9,5 @@ class RenderableSystem : public System
 public:
     void Init();
 
-    void Update(std::vector<RenderObject> &obj);
+    void Update(float dt);
 };
