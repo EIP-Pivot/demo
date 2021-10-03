@@ -17,10 +17,23 @@ else()
     message(STATUS "Looking for lld - not found")
 endif()
 
+option(COMPILER_PROFILING "Enable clang profiling" OFF)
+if(COMPILER_PROFILING)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        message(STATUS "Clang profiling - enabled")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        message(STATUS "GNU profiling - enabled")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-report")
+    else()
+        message(WARNING "Compiler does not support profiling")
+    endif()
+endif()
+
 FetchContent_Declare(
     pivot
     GIT_REPOSITORY https://github.com/EIP-Pivot/pivot.git
-    GIT_TAG 8d949bc6f6bff9c15f64e3e38a70e9ac32e724f8
+    GIT_TAG b13d2f910a0b929acac99970c29016c75369aabf
 )
 if (NOT pivot_POPULATED)
     message(STATUS "Populating pivot")

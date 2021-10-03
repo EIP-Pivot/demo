@@ -2,7 +2,6 @@
 #include <iostream>
 #include <random>
 
-#include <pivot/graphics/Camera.hxx>
 #include <pivot/graphics/VulkanApplication.hxx>
 #include <pivot/graphics/Window.hxx>
 #include <pivot/graphics/vk_utils.hxx>
@@ -80,18 +79,25 @@ public:
         for (auto &_entity: entities) {
             auto entity = gCoordinator.CreateEntity();
 
-            gCoordinator.AddComponent<Gravity>(entity, {.force = glm::vec3(0.0f, randGravity(generator), 0.0f)});
+            gCoordinator.AddComponent<Gravity>(entity, {
+                                                           .force = glm::vec3(0.0f, randGravity(generator), 0.0f),
+                                                       });
 
             gCoordinator.AddComponent<RigidBody>(
-                entity,
-                {.velocity = glm::vec3(randVelocityXZ(generator), randVelocityY(generator), randVelocityXZ(generator)),
-                 .acceleration = glm::vec3(0.0f, 0.0f, 0.0f)});
+                entity, {
+                            .velocity = glm::vec3(randVelocityXZ(generator), randVelocityY(generator),
+                                                  randVelocityXZ(generator)),
+                            .acceleration = glm::vec3(0.0f, 0.0f, 0.0f),
+                        });
 
             gCoordinator.AddComponent<Transform>(
                 entity,
-                {.position = glm::vec3(randPositionXZ(generator), randPositionY(generator), randPositionXZ(generator)),
-                 .rotation = glm::vec3(randRotation(generator), randRotation(generator), randRotation(generator)),
-                 .scale = glm::vec3(randScale(generator))});
+                {
+                    .position =
+                        glm::vec3(randPositionXZ(generator), randPositionY(generator), randPositionXZ(generator)),
+                    .rotation = glm::vec3(randRotation(generator), randRotation(generator), randRotation(generator)),
+                    .scale = glm::vec3(randScale(generator)),
+                });
 
             gCoordinator.AddComponent<Renderable>(entity, {.meshID = "cube", .textureIndex = 1});
 
@@ -113,9 +119,11 @@ public:
 
         camera = gCoordinator.CreateEntity();
         gCoordinator.AddComponent<Camera>(camera, Camera(glm::vec3(0, 200, 500)));
-        gCoordinator.AddComponent<Transform>(
-            camera,
-            {.position = glm::vec3(0.0f, 0.0f, 0.0f), .rotation = glm::vec3(0, 0, 0), .scale = glm::vec3(1.0f)});
+        gCoordinator.AddComponent<Transform>(camera, {
+                                                         .position = glm::vec3(0.0f, 0.0f, 0.0f),
+                                                         .rotation = glm::vec3(0, 0, 0),
+                                                         .scale = glm::vec3(1.0f),
+                                                     });
 
         scene.obj.push_back({
             .meshID = "plane",
@@ -173,7 +181,9 @@ public:
             auto yoffset = last.y - pos.y;
 
             last = pos;
-            gCoordinator.GetComponent<Camera>(camera).processMouseMovement(xoffset, yoffset);
+            Event event(Events::Window::MOUSE);
+            event.SetParam(Events::Window::Mouse::MOUSE, glm::dvec2(xoffset, yoffset));
+            gCoordinator.SendEvent(event);
         });
         load3DModels({"../assets/plane.obj", "../assets/cube.obj"});
         loadTextures({"../assets/rouge.png", "../assets/vert.png", "../assets/bleu.png", "../assets/cyan.png",
@@ -206,6 +216,7 @@ public:
     std::shared_ptr<PhysicsSystem> physicsSystem;
     std::shared_ptr<RenderableSystem> renderableSystem;
     std::shared_ptr<ControlSystem> controlSystem;
+
     Scene scene;
     Entity camera;
 };
