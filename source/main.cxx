@@ -181,9 +181,8 @@ public:
             auto yoffset = last.y - pos.y;
 
             last = pos;
-            Event event(Events::Window::MOUSE);
-            event.SetParam(Events::Window::Mouse::MOUSE, glm::dvec2(xoffset, yoffset));
-            gCoordinator.SendEvent(event);
+            ControlSystem::processMouseMovement(gCoordinator.GetComponent<Camera>(camera),
+                                                glm::dvec2(xoffset, yoffset));
         });
         load3DModels({"../assets/plane.obj", "../assets/cube.obj"});
         loadTextures({"../assets/rouge.png", "../assets/vert.png", "../assets/bleu.png", "../assets/cyan.png",
