@@ -33,7 +33,7 @@ endif()
 FetchContent_Declare(
     pivot
     GIT_REPOSITORY https://github.com/EIP-Pivot/pivot.git
-    GIT_TAG f49baa5b62fd346451a93565b745c5824ad5ef49
+    GIT_TAG 9e9a44f69a9f4a1b9914fd0c289c9b401332e7be
 )
 if (NOT pivot_POPULATED)
     message(STATUS "Populating pivot")

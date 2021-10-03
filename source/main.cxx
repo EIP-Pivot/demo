@@ -130,7 +130,8 @@ public:
                                                                             .rotation = glm::vec3(0, 0, 0),
                                                                             .scale = glm::vec3(1.0f),
                                                                         });
-        gSceneManager.getCurrentLevel().setCamera(camera);
+        gSceneManager.getCurrentLevel().addCamera(camera);
+
         gSceneManager.getCurrentLevel().obj.push_back({
             .meshID = "plane",
             .objectInformation =
@@ -238,7 +239,17 @@ public:
                                                                             .rotation = glm::vec3(0, 0, 0),
                                                                             .scale = glm::vec3(1.0f),
                                                                         });
-        gSceneManager.getCurrentLevel().setCamera(camera);
+        gSceneManager.getCurrentLevel().addCamera(camera);
+
+        Entity camera2 = gSceneManager.getCurrentLevel().CreateEntity();
+        gSceneManager.getCurrentLevel().AddComponent<Camera>(camera2, Camera(glm::vec3(0, 200, 500)));
+        gSceneManager.getCurrentLevel().AddComponent<Transform>(camera2, {
+                                                                             .position = glm::vec3(0.0f, 0.0f, 0.0f),
+                                                                             .rotation = glm::vec3(0, 0, 0),
+                                                                             .scale = glm::vec3(1.0f),
+                                                                         });
+        gSceneManager.getCurrentLevel().addCamera(camera2);
+
         gSceneManager.getCurrentLevel().obj.push_back({
             .meshID = "plane",
             .objectInformation =
@@ -276,6 +287,12 @@ public:
                                                gSceneManager.setCurrentLevelId(_scene2);
                                            else
                                                gSceneManager.setCurrentLevelId(_scene1);
+                                       }
+                                   });
+        window.setKeyEventCallback(Window::Key::V,
+                                   [&](Window &window, const Window::Key key, const Window::KeyAction action) {
+                                       if (action == Window::KeyAction::Release) {
+                                           gSceneManager.getCurrentLevel().switchCamera();
                                        }
                                    });
         auto key_lambda = [&](Window &window, const Window::Key key, const Window::KeyAction action) {
